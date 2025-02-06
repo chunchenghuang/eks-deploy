@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: reader
+  labels:
+    app: mysql
+    tier: database
+  namespace: mysql
+spec:
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        name: mysql-reader
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+          name: mysql
+        # specify mount point
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mysql-pv-claim
+      volumes:
+      - name: mysql-reader-volume
+        persistentVolumeClaim:
+          claimName: mysql-reader-pvc
+        # only specify volume Mounts with no volume claim as volumeClaimTemplates will be used
+        #
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mysql
+  # set your headless service name
+  # and it automatically sets the hostname and subdomain name for you
+  serviceName: mysql
+  # set for the statefulset to not follow ordered launch
+  podManagementPolicy: Parallel
+  # PVC template for creating automatically
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: mysql-pv-claim
+  #     namespace: mysql
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteOnce
+  #     storageClassName: mysql-storage
+  #     resources:
+  #       requests:
+  #         storage: 1Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: writer
+  labels:
+    app: mysql
+    tier: database
+  namespace: mysql
+spec:
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        name: mysql-writer
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+          name: mysql
+        # specify mount point
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mysql-pv-claim
+        # only specify volume Mounts with no volume claim as volumeClaimTemplates will be used
+      volumes:
+      - name: mysql-writer-volume
+        persistentVolumeClaim:
+          claimName: mysql-writer-pvc
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mysql
+  # set your headless service name
+  # and it automatically sets the hostname and subdomain name for you
+  serviceName: mysql
+  # set for the statefulset to not follow ordered launch
+  podManagementPolicy: Parallel
+  # PVC template for creating automatically
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: mysql-pv-claim
+  #     namespace: mysql
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteOnce
+  #     storageClassName: mysql-storage
+  #     resources:
+  #       requests:
+  #         storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: asiayo
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None

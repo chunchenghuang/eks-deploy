@@ -1,0 +1,74 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: mysql-storage
+  namespace: asiayo
+provisioner: kubernetes.io/no-provisioner
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-reader-pvc
+  namespace: asiayo
+  labels:
+    type: local
+    tier: database
+spec:
+  accessModes:
+  - ReadOnly
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: mysql-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-writer-pvc
+  namespace: asiayo
+  labels:
+    type: local
+    tier: database
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: mysql-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-reader-pv
+  namespace: asiayo
+  labels:
+    type: local
+    tier: database
+spec:
+  storageClassName: mysql-storage
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadOnly
+  hostPath:
+    path: /mnt/data01
+  persistentVolumeReclaimPolicy: Recycle
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-writer-pv
+  namespace: asiayo
+  labels:
+    type: local
+    tier: database
+spec:
+  storageClassName: mysql-storage
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: /mnt/data02
+  persistentVolumeReclaimPolicy: Recycle
